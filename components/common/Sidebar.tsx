@@ -1,9 +1,19 @@
+// components/common/Sidebar.tsx
 'use client';
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 
-export default function Sidebar() {
+interface SidebarProps {
+  staff: {
+    id: string;
+    name: string;
+    email: string;
+    role: { name: string };
+  };
+}
+
+export default function Sidebar({ staff }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -22,6 +32,10 @@ export default function Sidebar() {
   return (
     <div className="w-64 bg-gray-900 text-white min-h-screen p-4 flex flex-col">
       <div className="text-xl font-bold mb-8 px-2">PicoPay</div>
+      <div className="px-2 mb-6">
+        <p className="text-sm text-gray-400">{staff.name}</p>
+        <p className="text-xs text-gray-500">{staff.role.name}</p>
+      </div>
       <nav className="flex-1">
         {navItems.map((item) => (
           <Link

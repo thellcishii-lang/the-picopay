@@ -1,4 +1,3 @@
-// app/staff/layout.tsx
 import { redirect } from 'next/navigation';
 import { getCurrentStaff } from '@/lib/utils/auth';
 import Sidebar from '@/components/common/Sidebar';

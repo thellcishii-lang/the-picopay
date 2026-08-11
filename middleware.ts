@@ -1,24 +1,23 @@
+// middleware.ts
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-// セッションクッキー名
+// Node.js ランタイムを強制指定（Edge を無効化）
+export const runtime = 'nodejs';
+
 const SESSION_COOKIE_NAME = 'picopay_session';
 
-// 保護するルート
 const protectedRoutes = ['/staff', '/api/staff', '/api/roles', '/api/customers', '/api/balance', '/api/transactions'];
 const authRoutes = ['/login', '/'];
 
 export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
-  // セッションクッキーの有無で認証状態を判断（DBアクセスなし）
   const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME);
   const isAuthenticated = !!sessionCookie;
 
-  // APIルートの場合
   if (path.startsWith('/api')) {
-    // 認証不要なAPIは除外
-    const publicApis = ['/api/auth/login', '/api/auth/logout'];
+    const publicApis = ['/api/auth/login'];
     if (publicApis.some((api) => path.startsWith(api))) {
       return NextResponse.next();
     }
@@ -29,7 +28,6 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // ページルートの場合
   const isProtected = protectedRoutes.some((route) => path.startsWith(route));
   const isAuthPage = authRoutes.some((route) => path === route || path.startsWith(route + '/'));
 
@@ -43,9 +41,6 @@ export function middleware(request: NextRequest) {
 
   return NextResponse.next();
 }
-
-// Vercel Edge Runtime で実行するよう明示（これで next/server が正しく解決される）
-export const runtime = 'edge';
 
 export const config = {
   matcher: [

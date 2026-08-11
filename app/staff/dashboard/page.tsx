@@ -44,14 +44,13 @@ export default function DashboardPage() {
   const fetchDashboardData = async () => {
     try {
       const [balanceRes, transactionsRes] = await Promise.all([
-        fetch('/api/balance'), // 総残高
-        fetch('/api/transactions?limit=10'), // 最新10件
+        fetch('/api/balance'),
+        fetch('/api/transactions?limit=10'),
       ]);
 
       const balanceData = await balanceRes.json();
       const transactionsData = await transactionsRes.json();
 
-      // 本日の集計（サーバーサイドでやるべきだが、簡易的にフロントで計算）
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const todayTransactions = transactionsData.transactions?.filter((t: any) => {
@@ -96,7 +95,6 @@ export default function DashboardPage() {
         <p className="text-gray-600">こんにちは、{staffName} さん</p>
       </div>
 
-      {/* サマリーカード */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div className="bg-white rounded-lg shadow p-6">
           <p className="text-sm text-gray-500">総前受金残高</p>
@@ -125,7 +123,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* 最近の取引 */}
       <div className="bg-white rounded-lg shadow">
         <div className="px-6 py-4 border-b">
           <h2 className="text-lg font-bold">最近の取引</h2>
@@ -157,28 +154,16 @@ export default function DashboardPage() {
                       {t.customer.name}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`px-2 py-1 text-xs rounded ${
-                          t.type === 'charge'
-                            ? 'bg-blue-100 text-blue-700'
-                            : t.type === 'pay'
-                            ? 'bg-orange-100 text-orange-700'
-                            : 'bg-gray-100 text-gray-700'
-                        }`}
-                      >
+                      <span className={`px-2 py-1 text-xs rounded ${
+                        t.type === 'charge' ? 'bg-blue-100 text-blue-700' :
+                        t.type === 'pay' ? 'bg-orange-100 text-orange-700' :
+                        'bg-gray-100 text-gray-700'
+                      }`}>
                         {t.type === 'charge' ? '入金' : t.type === 'pay' ? '利用' : '取消'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right font-bold">
-                      <span
-                        className={
-                          t.type === 'charge'
-                            ? 'text-blue-600'
-                            : t.type === 'pay'
-                            ? 'text-orange-600'
-                            : 'text-gray-500'
-                        }
-                      >
+                      <span className={t.type === 'charge' ? 'text-blue-600' : t.type === 'pay' ? 'text-orange-600' : 'text-gray-500'}>
                         {t.type === 'charge' ? '+' : t.type === 'pay' ? '-' : ''}
                         ¥{t.amount.toLocaleString()}
                       </span>

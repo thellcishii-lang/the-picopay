@@ -1,11 +1,4 @@
-import type { Metadata } from 'next';
-import './globals.css';
-
-export const metadata: Metadata = {
-  title: 'PicoPay',
-  description: '前受金決済システム',
-};
-
+// app/layout.tsx
 export default function RootLayout({
   children,
 }: {

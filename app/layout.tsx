@@ -1,5 +1,5 @@
+// app/layout.tsx（修正後）
 import type { Metadata } from 'next';
-import './globals.css';
 
 export const metadata: Metadata = {
   title: 'PicoPay',

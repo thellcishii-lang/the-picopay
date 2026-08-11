@@ -1,3 +1,4 @@
+// app/staff/layout.tsx
 import Sidebar from '@/components/common/Sidebar';
 
 export default function StaffLayout({

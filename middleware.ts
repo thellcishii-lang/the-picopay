@@ -1,13 +1,19 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { getCurrentStaff } from '@/lib/utils/auth';
+
+// セッションクッキー名（auth.ts と合わせる）
+const SESSION_COOKIE_NAME = 'picopay_session';
 
 // 保護するルート
-const protectedRoutes = ['/staff', '/api/staff', '/api/roles'];
+const protectedRoutes = ['/staff', '/api/staff', '/api/roles', '/api/customers', '/api/balance', '/api/transactions'];
 const authRoutes = ['/login', '/'];
 
-export async function middleware(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
+
+  // セッションクッキーの有無で認証状態を判断（DBにはアクセスしない）
+  const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME);
+  const isAuthenticated = !!sessionCookie;
 
   // APIルートの場合
   if (path.startsWith('/api')) {
@@ -17,8 +23,8 @@ export async function middleware(request: NextRequest) {
       return NextResponse.next();
     }
 
-    const staff = await getCurrentStaff();
-    if (!staff) {
+    // 認証が必要なAPI
+    if (!isAuthenticated) {
       return NextResponse.json({ error: '未認証' }, { status: 401 });
     }
     return NextResponse.next();
@@ -28,15 +34,13 @@ export async function middleware(request: NextRequest) {
   const isProtected = protectedRoutes.some((route) => path.startsWith(route));
   const isAuthPage = authRoutes.some((route) => path === route || path.startsWith(route + '/'));
 
-  const staff = await getCurrentStaff();
-
   // 認証が必要なページに未認証でアクセス → ログインページへ
-  if (isProtected && !staff) {
+  if (isProtected && !isAuthenticated) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
   // 認証済みでログインページにアクセス → ダッシュボードへ
-  if (isAuthPage && staff && path !== '/') {
+  if (isAuthPage && isAuthenticated && path !== '/') {
     return NextResponse.redirect(new URL('/staff/dashboard', request.url));
   }
 

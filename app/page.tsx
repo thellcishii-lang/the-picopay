@@ -1,20 +1,15 @@
 // app/page.tsx
-'use client';
-
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-
 export default function HomePage() {
-  const router = useRouter();
-
-  useEffect(() => {
-    // ログインページにリダイレクト
-    router.push('/login');
-  }, [router]);
-
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <p>リダイレクト中...</p>
+    <div style={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center', 
+      height: '100vh',
+      fontSize: '2rem',
+      fontFamily: 'sans-serif'
+    }}>
+      Hello PicoPay!
     </div>
   );
 }

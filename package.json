@@ -1,0 +1,8 @@
+{
+  "scripts": {
+    "seed": "npx prisma db seed"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  }
+}

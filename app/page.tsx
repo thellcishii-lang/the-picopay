@@ -1,13 +1,20 @@
 // app/page.tsx
-import { redirect } from 'next/navigation';
-import { getCurrentStaff } from '@/lib/utils/auth';
+'use client';
 
-export default async function HomePage() {
-  const staff = await getCurrentStaff();
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
-  if (staff) {
-    redirect('/staff/dashboard');
-  } else {
-    redirect('/login');
-  }
+export default function HomePage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    // ログインページにリダイレクト
+    router.push('/login');
+  }, [router]);
+
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <p>リダイレクト中...</p>
+    </div>
+  );
 }

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getCurrentStaff, hasPermission } from '@/lib/utils/auth';
-import { Customer, Transaction } from '@prisma/client'; // ← 型をインポート
 
 // 顧客一覧取得
 export async function GET(request: NextRequest) {
@@ -47,16 +46,14 @@ export async function GET(request: NextRequest) {
     prisma.customer.count({ where }),
   ]);
 
-  // ★ 修正点：customer に型を明示
-  const customersWithBalance = customers.map(
-    (customer: Customer & { transactions: Transaction[] }) => {
-      const transactions = customer.transactions || [];
-      const latestTransaction = transactions[0];
-      const balance = latestTransaction ? latestTransaction.balanceAfter : 0;
-      const { transactions: _, ...customerWithoutTransactions } = customer;
-      return { ...customerWithoutTransactions, balance };
-    }
-  );
+  // ★ 修正点：customer を any 型にして回避
+  const customersWithBalance = customers.map((customer: any) => {
+    const transactions = customer.transactions || [];
+    const latestTransaction = transactions[0];
+    const balance = latestTransaction ? latestTransaction.balanceAfter : 0;
+    const { transactions: _, ...customerWithoutTransactions } = customer;
+    return { ...customerWithoutTransactions, balance };
+  });
 
   return NextResponse.json({
     customers: customersWithBalance,

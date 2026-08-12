@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { createSession } from '@/lib/utils/auth';
+import { verifyPassword, createSession } from '@/lib/utils/auth';
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,7 +14,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // スタッフを検索
     const staff = await prisma.staff.findUnique({
       where: { email },
       include: { role: true },
@@ -27,10 +26,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ★ パスワード検証を一時的にスキップ（誰でもログインできる状態）
-    // 本番環境では絶対に使わないでください！
+    // ★ パスワード検証を復活
+    const isValid = await verifyPassword(password, staff.password);
+    if (!isValid) {
+      return NextResponse.json(
+        { error: 'メールアドレスまたはパスワードが正しくありません。' },
+        { status: 401 }
+      );
+    }
 
-    // 最終ログイン日時を更新
     await prisma.staff.update({
       where: { id: staff.id },
       data: { lastLogin: new Date() },

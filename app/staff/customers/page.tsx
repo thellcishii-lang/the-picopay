@@ -33,6 +33,13 @@ export default function CustomersPage() {
   const [note, setNote] = useState('');
   const [processing, setProcessing] = useState(false);
 
+  // ★ QRコード発行用のstate
+  const [showQrForm, setShowQrForm] = useState(false);
+  const [newCustomerName, setNewCustomerName] = useState('');
+  const [newCustomerPhone, setNewCustomerPhone] = useState('');
+  const [showQrModal, setShowQrModal] = useState(false);
+  const [qrData, setQrData] = useState<any>(null);
+
   // 顧客一覧を取得
   const fetchCustomers = useCallback(async (page = 1) => {
     setLoading(true);
@@ -83,7 +90,6 @@ export default function CustomersPage() {
         throw new Error(error.error || '処理に失敗しました。');
       }
 
-      // 成功したら一覧を再読み込み
       await fetchCustomers();
       setShowModal(false);
       setAmount('');
@@ -105,6 +111,44 @@ export default function CustomersPage() {
     setShowModal(true);
   };
 
+  // ★ QR発行フォームを開く
+  const handleOpenQrForm = () => {
+    setNewCustomerName('');
+    setNewCustomerPhone('');
+    setShowQrForm(true);
+  };
+
+  // ★ QRコード生成APIを呼ぶ
+  const handleGenerateQR = async () => {
+    if (!newCustomerName || !newCustomerPhone) {
+      alert('名前と電話番号を入力してください。');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/customer/generate-qr', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newCustomerName,
+          phone: newCustomerPhone,
+        }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || 'QRコードの生成に失敗しました');
+        return;
+      }
+
+      setQrData(data);
+      setShowQrModal(true);
+      setShowQrForm(false);
+    } catch (error) {
+      alert('エラーが発生しました');
+    }
+  };
+
   return (
     <div className="p-8">
       {/* ヘッダー */}
@@ -118,9 +162,15 @@ export default function CustomersPage() {
             onChange={(e) => setSearch(e.target.value)}
             className="px-4 py-2 border rounded-lg w-64 focus:ring-2 focus:ring-blue-500"
           />
+          {/* ★ QR発行ボタン */}
+          <button
+            onClick={handleOpenQrForm}
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+          >
+            📱 新規顧客QR発行
+          </button>
           <button
             onClick={() => {
-              // 新規顧客登録（簡易版：アラートで代用）
               const name = prompt('顧客名を入力してください：');
               if (name) {
                 fetch('/api/customers', {
@@ -290,6 +340,86 @@ export default function CustomersPage() {
                 {processing ? '処理中...' : modalType === 'charge' ? '入金確定' : '利用確定'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ★ 名前・電話番号入力フォーム（モーダル） */}
+      {showQrForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 max-w-md w-full">
+            <h2 className="text-2xl font-bold mb-4">📝 顧客情報を入力</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  顧客名 <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={newCustomerName}
+                  onChange={(e) => setNewCustomerName(e.target.value)}
+                  className="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  placeholder="例：山田太郎"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  電話番号 <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="tel"
+                  value={newCustomerPhone}
+                  onChange={(e) => setNewCustomerPhone(e.target.value)}
+                  className="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  placeholder="例：09012345678"
+                />
+              </div>
+              <div className="flex gap-3 mt-4">
+                <button
+                  onClick={() => setShowQrForm(false)}
+                  className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50"
+                >
+                  キャンセル
+                </button>
+                <button
+                  onClick={handleGenerateQR}
+                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                >
+                  QRコード発行
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ★ QRコード表示モーダル */}
+      {showQrModal && qrData && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 max-w-md w-full text-center">
+            <h2 className="text-2xl font-bold mb-4">📱 顧客登録用QRコード</h2>
+            <div className="flex justify-center mb-4">
+              <img src={qrData.qrImage} alt="QRコード" className="w-64 h-64" />
+            </div>
+            <p className="text-sm text-gray-600 mb-2">
+              お客様にこのQRコードを読み取ってもらってください
+            </p>
+            <p className="text-xs text-gray-500">
+              有効期限: {new Date(qrData.expiresAt).toLocaleString()}
+            </p>
+            <p className="text-xs text-gray-500 break-all mt-2">
+              URL: {qrData.signupUrl}
+            </p>
+            <button
+              onClick={() => {
+                setShowQrModal(false);
+                setQrData(null);
+                fetchCustomers(); // 一覧を更新
+              }}
+              className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              閉じる
+            </button>
           </div>
         </div>
       )}

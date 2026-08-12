@@ -1,26 +1,36 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getCurrentStaff } from '@/lib/utils/auth';
 import QRCode from 'qrcode';
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
     const staff = await getCurrentStaff();
     if (!staff) {
       return NextResponse.json({ error: '未認証' }, { status: 401 });
     }
 
-    // 一意のトークンを生成（簡易的にUUID＋タイムスタンプ）
-    const token = `${crypto.randomUUID()}-${Date.now()}`;
+    // リクエストボディから名前と電話番号を取得
+    const body = await request.json();
+    const { name, phone } = body;
 
-    // 有効期限を設定（例：24時間後）
+    if (!name || !phone) {
+      return NextResponse.json(
+        { error: '名前と電話番号は必須です。' },
+        { status: 400 }
+      );
+    }
+
+    // 一意のトークンを生成
+    const token = `${crypto.randomUUID()}-${Date.now()}`;
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-    // 仮顧客レコードを作成（本登録はSMS認証後）
+    // 顧客レコードを作成（qrTokenを保存）
     const customer = await prisma.customer.create({
       data: {
         storeId: staff.storeId,
-        name: '仮登録', // 仮の名前
+        name: name,
+        phone: phone,
         qrToken: token,
         qrTokenExpiresAt: expiresAt,
       },
@@ -28,8 +38,6 @@ export async function POST() {
 
     // QRコードに含めるURL
     const signupUrl = `${process.env.NEXT_PUBLIC_APP_URL}/customer/signup?token=${token}`;
-
-    // QRコードを画像データ（DataURL）として生成
     const qrImage = await QRCode.toDataURL(signupUrl, {
       width: 300,
       margin: 2,
@@ -42,6 +50,7 @@ export async function POST() {
       customerId: customer.id,
       expiresAt,
       signupUrl,
+      customer: { name, phone },
     });
   } catch (error) {
     console.error('QR発行エラー:', error);

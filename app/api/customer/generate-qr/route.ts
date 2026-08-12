@@ -21,7 +21,10 @@ export async function POST(request: NextRequest) {
     }
 
     const token = `${crypto.randomUUID()}-${Date.now()}`;
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    
+    // ★ 修正：確実にDateオブジェクトを生成
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 1); // 24時間後
 
     const customer = await prisma.customer.create({
       data: {
@@ -29,7 +32,7 @@ export async function POST(request: NextRequest) {
         name: name,
         phone: phone,
         qrToken: token,
-        qrTokenExpiresAt: expiresAt,
+        qrTokenExpiresAt: expiresAt, // ★ Dateオブジェクトを渡す
       },
     });
 

@@ -2,7 +2,16 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { hashPassword } from '@/lib/utils/auth';
 
+// GETでもPOSTでも同じ処理をする
+export async function GET() {
+  return await handleReset();
+}
+
 export async function POST() {
+  return await handleReset();
+}
+
+async function handleReset() {
   try {
     const hashed = await hashPassword('password123');
 
@@ -14,7 +23,6 @@ export async function POST() {
     return NextResponse.json({
       success: true,
       message: 'パスワードを password123 にリセットしました',
-      hash: hashed,
     });
   } catch (error) {
     return NextResponse.json(

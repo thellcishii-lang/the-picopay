@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
-import { Staff, Role } from '@prisma/client';
+// import { Staff, Role } from '@prisma/client'; ← この行を削除
 
 const SESSION_COOKIE_NAME = 'picopay_session';
 
@@ -18,7 +18,6 @@ export async function verifyPassword(password: string, hashed: string): Promise<
 // セッション作成（ログイン時に呼ぶ）
 export async function createSession(staffId: string): Promise<void> {
   const cookieStore = await cookies();
-  // 簡易セッション（本番はJWTやDBセッション推奨）
   cookieStore.set(SESSION_COOKIE_NAME, staffId, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -34,8 +33,8 @@ export async function destroySession(): Promise<void> {
   cookieStore.delete(SESSION_COOKIE_NAME);
 }
 
-// 現在のセッションからスタッフ情報を取得
-export async function getCurrentStaff(): Promise<(Staff & { role: Role }) | null> {
+// ★ 戻り値の型を any に変更
+export async function getCurrentStaff(): Promise<any> {
   const cookieStore = await cookies();
   const staffId = cookieStore.get(SESSION_COOKIE_NAME)?.value;
 
@@ -49,7 +48,7 @@ export async function getCurrentStaff(): Promise<(Staff & { role: Role }) | null
   return staff;
 }
 
-// 権限チェック（特定の権限を持っているか）
+// ★ 権限チェック（staff を any で扱う）
 export async function hasPermission(permissionKey: string): Promise<boolean> {
   const staff = await getCurrentStaff();
   if (!staff) return false;

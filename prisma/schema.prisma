@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("POSTGRES_URL_NON_POOLING")  // ← ここを変更
+  url      = env("POSTGRES_URL_NON_POOLING")
 }
 
 model Store {
@@ -56,6 +56,10 @@ model Customer {
   transactions Transaction[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+
+  // ★ QRコード発行用に追加
+  qrToken          String?   @unique
+  qrTokenExpiresAt DateTime?
 }
 
 model Transaction {

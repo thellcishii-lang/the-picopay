@@ -3,24 +3,28 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   try {
-    // 1. 環境変数の存在確認（値は表示しない）
+    // 環境変数の存在確認
     const envCheck = {
       POSTGRES_URL: !!process.env.POSTGRES_URL,
       DATABASE_URL: !!process.env.DATABASE_URL,
       NODE_ENV: process.env.NODE_ENV,
     };
 
-    // 2. データベース接続テスト
-    const result = await prisma.$queryRaw`SELECT 1 as connected, NOW() as time, current_database() as db_name`;
+    // ★ モデルを使ったクエリに変更（$queryRaw は使わない）
+    const staffCount = await prisma.staff.count();
+    const storeCount = await prisma.store.count();
 
     return NextResponse.json({
       success: true,
       message: 'データベース接続成功！',
       env: envCheck,
-      data: result,
+      data: {
+        staffCount,
+        storeCount,
+        tablesExist: { staff: staffCount >= 0, store: storeCount >= 0 },
+      },
     });
   } catch (error: any) {
-    // 3. エラーの詳細を全て返す
     console.error('DB接続エラー詳細:', error);
     return NextResponse.json({
       success: false,

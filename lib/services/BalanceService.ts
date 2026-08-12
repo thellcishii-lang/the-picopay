@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Customer, Transaction } from '@prisma/client';
+// import { Customer, Transaction } from '@prisma/client'; ← この行を削除
 
 export class BalanceService {
   /**
@@ -10,13 +10,12 @@ export class BalanceService {
     amount: number,
     staffId: string,
     note?: string
-  ): Promise<Transaction> {
+  ) {
     if (amount <= 0) {
       throw new Error('入金額は正の値を指定してください。');
     }
 
     return await prisma.$transaction(async (tx) => {
-      // 楽観的ロック用に現在の残高を取得
       const customer = await tx.customer.findUnique({
         where: { id: customerId },
       });
@@ -51,7 +50,7 @@ export class BalanceService {
     amount: number,
     staffId: string,
     note?: string
-  ): Promise<Transaction> {
+  ) {
     if (amount <= 0) {
       throw new Error('利用額は正の値を指定してください。');
     }
@@ -95,7 +94,7 @@ export class BalanceService {
     customerId: string,
     staffId: string,
     reason?: string
-  ): Promise<Transaction> {
+  ) {
     return await prisma.$transaction(async (tx) => {
       const customer = await tx.customer.findUnique({
         where: { id: customerId },
@@ -105,7 +104,6 @@ export class BalanceService {
         throw new Error('顧客が見つかりません。');
       }
 
-      // 最新の取引を取得
       const lastTransaction = await tx.transaction.findFirst({
         where: { customerId },
         orderBy: { occurredAt: 'desc' },
@@ -115,22 +113,17 @@ export class BalanceService {
         throw new Error('取消可能な取引がありません。');
       }
 
-      // 既にキャンセル済みならエラー
       if (lastTransaction.type === 'cancel') {
         throw new Error('この取引は既にキャンセルされています。');
       }
-
-      // 元の取引の逆方向の取引を作成
-      const cancelAmount = lastTransaction.amount;
-      const newBalance = lastTransaction.balanceAfter;
 
       return tx.transaction.create({
         data: {
           customerId,
           storeId: customer.storeId,
           type: 'cancel',
-          amount: cancelAmount,
-          balanceAfter: newBalance, // キャンセル時は前の残高に戻す
+          amount: lastTransaction.amount,
+          balanceAfter: lastTransaction.balanceAfter,
           staffId,
           note: reason || `取引ID: ${lastTransaction.id} の取消`,
           occurredAt: new Date(),
@@ -142,10 +135,7 @@ export class BalanceService {
   /**
    * 現在の残高を取得（トランザクション内で使用）
    */
-  private static async getCurrentBalance(
-    tx: any,
-    customerId: string
-  ): Promise<number> {
+  private static async getCurrentBalance(tx: any, customerId: string): Promise<number> {
     const last = await tx.transaction.findFirst({
       where: { customerId },
       orderBy: { occurredAt: 'desc' },
@@ -170,7 +160,6 @@ export class BalanceService {
    * 店舗の総前受金残高を取得
    */
   static async getTotalBalance(storeId: string): Promise<number> {
-    // 各顧客の最新残高を合計
     const result = await prisma.$queryRaw<{ total: number }[]>`
       SELECT COALESCE(SUM(balance_after), 0) as total
       FROM (

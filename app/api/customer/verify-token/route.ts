@@ -9,19 +9,35 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ valid: false, error: 'トークンがありません。' });
     }
 
+    console.log('[verify-token] 検索するトークン:', token);
+
+    // ★ 期限切れのチェックを一旦外して、トークンだけで検索
     const customer = await prisma.customer.findFirst({
       where: {
         qrToken: token,
-        qrTokenExpiresAt: {
-          gt: new Date(), // 有効期限内
-        },
       },
     });
+
+    console.log('[verify-token] 検索結果:', customer);
 
     if (!customer) {
       return NextResponse.json({
         valid: false,
-        error: 'このQRコードは無効か期限切れです。',
+        error: 'このQRコードは無効です。',
+        debug: { token, found: false },
+      });
+    }
+
+    // ★ 期限チェック（有効期限が設定されていて、かつ現在時刻より後なら有効）
+    const isValid = customer.qrTokenExpiresAt
+      ? new Date(customer.qrTokenExpiresAt) > new Date()
+      : true;
+
+    if (!isValid) {
+      return NextResponse.json({
+        valid: false,
+        error: 'このQRコードは期限切れです。',
+        debug: { token, expiresAt: customer.qrTokenExpiresAt, now: new Date() },
       });
     }
 
@@ -34,9 +50,9 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('トークン検証エラー:', error);
+    console.error('[verify-token] エラー:', error);
     return NextResponse.json(
-      { valid: false, error: 'サーバーエラーが発生しました。' },
+      { valid: false, error: 'サーバーエラーが発生しました。', debug: { error: String(error) } },
       { status: 500 }
     );
   }

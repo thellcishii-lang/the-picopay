@@ -288,19 +288,32 @@ export default function CustomersPage() {
       )}
 
       {/* ★ QRコード表示モーダル */}
-      {showQrModal && qrData && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-8 max-w-md w-full text-center">
-            <h2 className="text-2xl font-bold mb-4">📱 顧客登録用QRコード</h2>
-            <div className="flex justify-center mb-4">
-              <img src={qrData.qrImage} alt="QRコード" className="w-64 h-64" />
-            </div>
-            <p className="text-sm text-gray-600 mb-2">お客様にこのQRコードを読み取ってもらってください</p>
-            <p className="text-xs text-gray-500">有効期限: {qrData.expiresAt ? new Date(qrData.expiresAt).toLocaleString() : '—'}</p>
-            <button onClick={() => { setShowQrModal(false); setQrData(null); }} className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">閉じる</button>
-          </div>
-        </div>
-      )}
+{showQrModal && qrData && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="bg-white rounded-lg p-8 max-w-md w-full text-center">
+      <h2 className="text-2xl font-bold mb-4">📱 顧客登録用QRコード</h2>
+      <div className="flex justify-center mb-4">
+        <img src={qrData.qrImage} alt="QRコード" className="w-64 h-64" />
+      </div>
+      <p className="text-sm text-gray-600 mb-2">
+        お客様にこのQRコードを読み取ってもらってください
+      </p>
+      <p className="text-xs text-gray-500">
+        有効期限: {qrData.expiresAt ? new Date(qrData.expiresAt).toLocaleString() : '—'}
+      </p>
+      {/* ★ ここにURLを表示する行を追加 */}
+      <p className="text-xs text-gray-500 break-all mt-2">
+        URL: {qrData.signupUrl}
+      </p>
+      <button
+        onClick={() => { setShowQrModal(false); setQrData(null); }}
+        className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+      >
+        閉じる
+      </button>
+    </div>
+  </div>
+)}
     </div>
   );
 }

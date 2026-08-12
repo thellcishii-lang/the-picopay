@@ -10,7 +10,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '未認証' }, { status: 401 });
     }
 
-    // リクエストボディから名前と電話番号を取得
     const body = await request.json();
     const { name, phone } = body;
 
@@ -21,11 +20,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 一意のトークンを生成
     const token = `${crypto.randomUUID()}-${Date.now()}`;
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-    // 顧客レコードを作成（qrTokenを保存）
     const customer = await prisma.customer.create({
       data: {
         storeId: staff.storeId,
@@ -36,7 +33,6 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // QRコードに含めるURL
     const signupUrl = `${process.env.NEXT_PUBLIC_APP_URL}/customer/signup?token=${token}`;
     const qrImage = await QRCode.toDataURL(signupUrl, {
       width: 300,
@@ -50,7 +46,6 @@ export async function POST(request: NextRequest) {
       customerId: customer.id,
       expiresAt,
       signupUrl,
-      customer: { name, phone },
     });
   } catch (error) {
     console.error('QR発行エラー:', error);

@@ -1,5 +1,4 @@
 import { prisma } from '@/lib/prisma';
-// import { Customer, Transaction } from '@prisma/client'; ← この行を削除
 
 export class BalanceService {
   /**
@@ -15,7 +14,8 @@ export class BalanceService {
       throw new Error('入金額は正の値を指定してください。');
     }
 
-    return await prisma.$transaction(async (tx) => {
+    // ★ tx に any 型を付ける
+    return await prisma.$transaction(async (tx: any) => {
       const customer = await tx.customer.findUnique({
         where: { id: customerId },
       });
@@ -55,7 +55,8 @@ export class BalanceService {
       throw new Error('利用額は正の値を指定してください。');
     }
 
-    return await prisma.$transaction(async (tx) => {
+    // ★ tx に any 型を付ける
+    return await prisma.$transaction(async (tx: any) => {
       const customer = await tx.customer.findUnique({
         where: { id: customerId },
       });
@@ -95,7 +96,8 @@ export class BalanceService {
     staffId: string,
     reason?: string
   ) {
-    return await prisma.$transaction(async (tx) => {
+    // ★ tx に any 型を付ける
+    return await prisma.$transaction(async (tx: any) => {
       const customer = await tx.customer.findUnique({
         where: { id: customerId },
       });

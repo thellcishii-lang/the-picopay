@@ -57,9 +57,13 @@ model Customer {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
-  // ★ QRコード発行用に追加
+  // ★ QRコード発行用
   qrToken          String?   @unique
   qrTokenExpiresAt DateTime?
+
+  // ★ SMS認証（Firebase）用
+  phoneVerified    Boolean   @default(false)
+  firebaseUid      String?   @unique
 }
 
 model Transaction {

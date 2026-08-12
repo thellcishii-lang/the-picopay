@@ -9,12 +9,8 @@ export async function hashPassword(password: string): Promise<string> {
 }
 
 // パスワード検証（一時的なデバッグ用）
+// パスワード検証（本番用）
 export async function verifyPassword(password: string, hashed: string): Promise<boolean> {
-  // 一時的なデバッグ：password123 なら強制的に true
-  if (password === 'password123') {
-    console.log('[DEBUG] Force login successful!');
-    return true;
-  }
   return bcrypt.compare(password, hashed);
 }
 

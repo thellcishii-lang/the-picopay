@@ -46,11 +46,14 @@ export async function GET(request: NextRequest) {
     prisma.customer.count({ where }),
   ]);
 
-  // 各顧客の最新残高を計算
+  // ★ 修正点：transactions が undefined の場合を安全に処理
   const customersWithBalance = customers.map((customer) => {
-    const latestTransaction = customer.transactions[0];
+    // transactions が undefined または空配列の場合を考慮
+    const transactions = customer.transactions || [];
+    const latestTransaction = transactions[0];
     const balance = latestTransaction ? latestTransaction.balanceAfter : 0;
-    const { transactions, ...customerWithoutTransactions } = customer;
+    // 未使用変数 _ を使って transactions を除外
+    const { transactions: _, ...customerWithoutTransactions } = customer;
     return { ...customerWithoutTransactions, balance };
   });
 

@@ -40,7 +40,6 @@ export default function CustomersPage() {
   const [showQrModal, setShowQrModal] = useState(false);
   const [qrData, setQrData] = useState<any>(null);
 
-  // 顧客一覧を取得
   const fetchCustomers = useCallback(async (page = 1) => {
     setLoading(true);
     try {
@@ -65,7 +64,6 @@ export default function CustomersPage() {
     fetchCustomers();
   }, [fetchCustomers]);
 
-  // 入金/利用処理
   const handleTransaction = async () => {
     if (!selectedCustomer || !amount || parseInt(amount) <= 0) {
       alert('金額を正しく入力してください。');
@@ -102,7 +100,6 @@ export default function CustomersPage() {
     }
   };
 
-  // モーダルを開く
   const openModal = (customer: Customer, type: 'charge' | 'pay') => {
     setSelectedCustomer(customer);
     setModalType(type);
@@ -118,7 +115,7 @@ export default function CustomersPage() {
     setShowQrForm(true);
   };
 
-  // ★ QRコード生成APIを呼ぶ
+  // ★ QRコード生成APIを呼ぶ（完全版）
   const handleGenerateQR = async () => {
     if (!newCustomerName || !newCustomerPhone) {
       alert('名前と電話番号を入力してください。');
@@ -144,7 +141,6 @@ export default function CustomersPage() {
       setQrData(data);
       setShowQrModal(true);
       setShowQrForm(false);
-      // 顧客一覧を更新（新規顧客が追加されているため）
       fetchCustomers();
     } catch (error) {
       alert('エラーが発生しました');
@@ -198,57 +194,30 @@ export default function CustomersPage() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    顧客名
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    電話番号
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    残高
-                  </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    操作
-                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">顧客名</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">電話番号</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">残高</th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {customers.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
-                      顧客が見つかりませんでした。
-                    </td>
-                  </tr>
+                  <tr><td colSpan={4} className="px-6 py-8 text-center text-gray-500">顧客が見つかりませんでした。</td></tr>
                 ) : (
                   customers.map((customer) => (
                     <tr key={customer.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="font-medium text-gray-900">{customer.name}</div>
-                        {customer.email && (
-                          <div className="text-sm text-gray-500">{customer.email}</div>
-                        )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-600">
-                        {customer.phone || '—'}
-                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-gray-600">{customer.phone || '—'}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-right font-bold">
                         <span className={customer.balance >= 0 ? 'text-green-600' : 'text-red-600'}>
                           ¥{customer.balance.toLocaleString()}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <button
-                          onClick={() => openModal(customer, 'charge')}
-                          className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 mr-2 text-sm"
-                        >
-                          入金
-                        </button>
-                        <button
-                          onClick={() => openModal(customer, 'pay')}
-                          className="px-3 py-1 bg-orange-100 text-orange-700 rounded hover:bg-orange-200 text-sm"
-                        >
-                          利用
-                        </button>
+                        <button onClick={() => openModal(customer, 'charge')} className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 mr-2 text-sm">入金</button>
+                        <button onClick={() => openModal(customer, 'pay')} className="px-3 py-1 bg-orange-100 text-orange-700 rounded hover:bg-orange-200 text-sm">利用</button>
                       </td>
                     </tr>
                   ))
@@ -256,22 +225,10 @@ export default function CustomersPage() {
               </tbody>
             </table>
           </div>
-
-          {/* ページネーション */}
           {pagination && pagination.totalPages > 1 && (
             <div className="flex justify-center gap-2 mt-6">
               {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((p) => (
-                <button
-                  key={p}
-                  onClick={() => fetchCustomers(p)}
-                  className={`px-4 py-2 border rounded ${
-                    p === pagination.page
-                      ? 'bg-blue-600 text-white border-blue-600'
-                      : 'hover:bg-gray-100'
-                  }`}
-                >
-                  {p}
-                </button>
+                <button key={p} onClick={() => fetchCustomers(p)} className={`px-4 py-2 border rounded ${p === pagination.page ? 'bg-blue-600 text-white border-blue-600' : 'hover:bg-gray-100'}`}>{p}</button>
               ))}
             </div>
           )}
@@ -282,63 +239,24 @@ export default function CustomersPage() {
       {showModal && selectedCustomer && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-8 max-w-md w-full">
-            <h2 className="text-2xl font-bold mb-4">
-              {modalType === 'charge' ? '💰 入金' : '💳 利用'}
-            </h2>
+            <h2 className="text-2xl font-bold mb-4">{modalType === 'charge' ? '💰 入金' : '💳 利用'}</h2>
             <div className="mb-4">
-              <p className="text-gray-600">
-                顧客: <span className="font-bold">{selectedCustomer.name}</span>
-              </p>
-              <p className="text-gray-600">
-                現在の残高: <span className="font-bold">¥{selectedCustomer.balance.toLocaleString()}</span>
-              </p>
+              <p className="text-gray-600">顧客: <span className="font-bold">{selectedCustomer.name}</span></p>
+              <p className="text-gray-600">現在の残高: <span className="font-bold">¥{selectedCustomer.balance.toLocaleString()}</span></p>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  {modalType === 'charge' ? '入金額' : '利用額'}
-                </label>
-                <input
-                  type="number"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  className="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                  placeholder="0"
-                  min="1"
-                />
+                <label className="block text-sm font-medium text-gray-700">{modalType === 'charge' ? '入金額' : '利用額'}</label>
+                <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="0" min="1" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">備考（任意）</label>
-                <input
-                  type="text"
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  className="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                  placeholder="伝票番号やメモ"
-                />
+                <input type="text" value={note} onChange={(e) => setNote(e.target.value)} className="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="伝票番号やメモ" />
               </div>
             </div>
             <div className="flex justify-end gap-3 mt-6">
-              <button
-                onClick={() => {
-                  setShowModal(false);
-                  setSelectedCustomer(null);
-                  setAmount('');
-                  setNote('');
-                }}
-                className="px-4 py-2 border rounded-lg hover:bg-gray-50"
-              >
-                キャンセル
-              </button>
-              <button
-                onClick={handleTransaction}
-                disabled={processing}
-                className={`px-6 py-2 rounded-lg text-white ${
-                  modalType === 'charge'
-                    ? 'bg-blue-600 hover:bg-blue-700'
-                    : 'bg-orange-600 hover:bg-orange-700'
-                } disabled:opacity-50`}
-              >
+              <button onClick={() => { setShowModal(false); setSelectedCustomer(null); setAmount(''); setNote(''); }} className="px-4 py-2 border rounded-lg hover:bg-gray-50">キャンセル</button>
+              <button onClick={handleTransaction} disabled={processing} className={`px-6 py-2 rounded-lg text-white ${modalType === 'charge' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-orange-600 hover:bg-orange-700'} disabled:opacity-50`}>
                 {processing ? '処理中...' : modalType === 'charge' ? '入金確定' : '利用確定'}
               </button>
             </div>
@@ -353,42 +271,16 @@ export default function CustomersPage() {
             <h2 className="text-2xl font-bold mb-4">📝 顧客情報を入力</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  顧客名 <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={newCustomerName}
-                  onChange={(e) => setNewCustomerName(e.target.value)}
-                  className="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                  placeholder="例：山田太郎"
-                />
+                <label className="block text-sm font-medium text-gray-700">顧客名 <span className="text-red-500">*</span></label>
+                <input type="text" value={newCustomerName} onChange={(e) => setNewCustomerName(e.target.value)} className="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="例：山田太郎" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  電話番号 <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="tel"
-                  value={newCustomerPhone}
-                  onChange={(e) => setNewCustomerPhone(e.target.value)}
-                  className="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                  placeholder="例：09012345678"
-                />
+                <label className="block text-sm font-medium text-gray-700">電話番号 <span className="text-red-500">*</span></label>
+                <input type="tel" value={newCustomerPhone} onChange={(e) => setNewCustomerPhone(e.target.value)} className="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="例：09012345678" />
               </div>
               <div className="flex gap-3 mt-4">
-                <button
-                  onClick={() => setShowQrForm(false)}
-                  className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50"
-                >
-                  キャンセル
-                </button>
-                <button
-                  onClick={handleGenerateQR}
-                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                >
-                  QRコード発行
-                </button>
+                <button onClick={() => setShowQrForm(false)} className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50">キャンセル</button>
+                <button onClick={handleGenerateQR} className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">QRコード発行</button>
               </div>
             </div>
           </div>
@@ -403,21 +295,9 @@ export default function CustomersPage() {
             <div className="flex justify-center mb-4">
               <img src={qrData.qrImage} alt="QRコード" className="w-64 h-64" />
             </div>
-            <p className="text-sm text-gray-600 mb-2">
-              お客様にこのQRコードを読み取ってもらってください
-            </p>
-            <p className="text-xs text-gray-500">
-              有効期限: {qrData.expiresAt ? new Date(qrData.expiresAt).toLocaleString() : '—'}
-            </p>
-            <button
-              onClick={() => {
-                setShowQrModal(false);
-                setQrData(null);
-              }}
-              className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            >
-              閉じる
-            </button>
+            <p className="text-sm text-gray-600 mb-2">お客様にこのQRコードを読み取ってもらってください</p>
+            <p className="text-xs text-gray-500">有効期限: {qrData.expiresAt ? new Date(qrData.expiresAt).toLocaleString() : '—'}</p>
+            <button onClick={() => { setShowQrModal(false); setQrData(null); }} className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">閉じる</button>
           </div>
         </div>
       )}

@@ -144,6 +144,8 @@ export default function CustomersPage() {
       setQrData(data);
       setShowQrModal(true);
       setShowQrForm(false);
+      // 顧客一覧を更新（新規顧客が追加されているため）
+      fetchCustomers();
     } catch (error) {
       alert('エラーが発生しました');
     }
@@ -154,7 +156,7 @@ export default function CustomersPage() {
       {/* ヘッダー */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">顧客管理</h1>
-        <div className="flex gap-3">
+        <div className="flex gap-3 flex-wrap">
           <input
             type="text"
             placeholder="名前・電話番号で検索..."
@@ -344,7 +346,7 @@ export default function CustomersPage() {
         </div>
       )}
 
-      {/* ★ 名前・電話番号入力フォーム（モーダル） */}
+      {/* ★ 名前・電話番号入力フォーム（QR発行用） */}
       {showQrForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-8 max-w-md w-full">
@@ -405,16 +407,12 @@ export default function CustomersPage() {
               お客様にこのQRコードを読み取ってもらってください
             </p>
             <p className="text-xs text-gray-500">
-              有効期限: {new Date(qrData.expiresAt).toLocaleString()}
-            </p>
-            <p className="text-xs text-gray-500 break-all mt-2">
-              URL: {qrData.signupUrl}
+              有効期限: {qrData.expiresAt ? new Date(qrData.expiresAt).toLocaleString() : '—'}
             </p>
             <button
               onClick={() => {
                 setShowQrModal(false);
                 setQrData(null);
-                fetchCustomers(); // 一覧を更新
               }}
               className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
             >

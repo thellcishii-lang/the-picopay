@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
 
-export default function CustomerSignupPage() {
+// ★ useSearchParams を使う部分を別コンポーネントに分離
+function SignupContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
 
@@ -14,7 +14,6 @@ export default function CustomerSignupPage() {
   const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState('');
 
-  // トークンを検証
   useEffect(() => {
     if (!token) {
       setError('無効なURLです。');
@@ -45,7 +44,6 @@ export default function CustomerSignupPage() {
       alert('利用規約に同意してください。');
       return;
     }
-    // 次のステップ（SMS認証）へ進む
     window.location.href = `/customer/verify?token=${token}`;
   };
 
@@ -115,5 +113,14 @@ export default function CustomerSignupPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+// ★ ページ本体（Suspenseでラップ）
+export default function CustomerSignupPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">読み込み中...</div>}>
+      <SignupContent />
+    </Suspense>
   );
 }

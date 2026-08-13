@@ -78,8 +78,14 @@ function VerifyContent() {
       addLog(`📞 変換後: ${formattedPhone}`);
 
       const recaptchaVerifier = new RecaptchaVerifier(auth, 'send-sms-button', {
-        size: 'invisible',
-      });
+  size: 'invisible',
+  callback: () => {
+    addLog('✅ reCAPTCHA コールバック成功');
+  },
+  'expired-callback': () => {
+    addLog('⚠️ reCAPTCHA 有効期限切れ');
+  },
+});
 
       addLog('🔐 reCAPTCHA設定完了');
       const result = await signInWithPhoneNumber(auth, formattedPhone, recaptchaVerifier);

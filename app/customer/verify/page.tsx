@@ -10,7 +10,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyAKwyjQexM3IpWwfPxO3uhUBnBt1fD2EA",
   authDomain: "the-picopay.firebaseapp.com",
   projectId: "the-picopay",
-};
+}; 
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);

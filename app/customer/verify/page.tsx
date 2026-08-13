@@ -5,12 +5,13 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInWithPhoneNumber, ConfirmationResult, RecaptchaVerifier } from 'firebase/auth';
 
-// 環境変数を使わずに、直接値を書く（一時的）
 const firebaseConfig = {
-  apiKey: "AIzaSyAKwyjQexM3IpWwfPxO3uhUBnBt1fD2EA",
-  authDomain: "the-picopay.firebaseapp.com",
-  projectId: "the-picopay",
-}; 
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyAKwyjQexM3IpWwfPxO3uhUBnBt1fD2EA",
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "the-picopay.firebaseapp.com",
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "the-picopay",
+};
+
+console.log('🔥 Firebase Config:', firebaseConfig);
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -26,11 +27,18 @@ function VerifyContent() {
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
+  const [debugLog, setDebugLog] = useState<string[]>([]);
+
+  const addLog = (msg: string) => {
+    console.log('🐛', msg);
+    setDebugLog(prev => [...prev, msg]);
+  };
 
   useEffect(() => {
     if (!token) {
       setLoading(false);
       setError('無効なURLです。');
+      addLog('❌ トークンなし');
       return;
     }
 
@@ -39,31 +47,46 @@ function VerifyContent() {
       .then((data) => {
         if (data.valid && data.customer) {
           setPhoneNumber(data.customer.phone || '');
+          addLog(`✅ 顧客情報取得: ${data.customer.name} (${data.customer.phone})`);
         } else {
           setError(data.error || '無効なQRコードです。');
+          addLog(`❌ 顧客情報取得失敗: ${data.error}`);
         }
       })
-      .catch(() => setError('サーバーエラーが発生しました。'))
+      .catch(() => {
+        setError('サーバーエラーが発生しました。');
+        addLog('❌ サーバーエラー');
+      })
       .finally(() => setLoading(false));
   }, [token]);
 
   const sendSms = async () => {
-    if (!phoneNumber) return;
+    if (!phoneNumber) {
+      addLog('⚠️ 電話番号が空です');
+      return;
+    }
+
+    addLog(`📨 SMS送信開始: ${phoneNumber}`);
     setSending(true);
     setError('');
+
     try {
       const formattedPhone = phoneNumber.startsWith('0')
         ? `+81${phoneNumber.slice(1)}`
         : phoneNumber;
 
-      // reCAPTCHA を設定（見えないタイプ）
+      addLog(`📞 変換後: ${formattedPhone}`);
+
       const recaptchaVerifier = new RecaptchaVerifier(auth, 'send-sms-button', {
         size: 'invisible',
       });
 
+      addLog('🔐 reCAPTCHA設定完了');
       const result = await signInWithPhoneNumber(auth, formattedPhone, recaptchaVerifier);
       setConfirmationResult(result);
+      addLog('✅ SMS送信成功！認証コードを待っています');
     } catch (err: any) {
+      addLog(`❌ SMS送信エラー: ${err.message}`);
       setError(err.message || 'SMS送信に失敗しました。');
     } finally {
       setSending(false);
@@ -71,18 +94,27 @@ function VerifyContent() {
   };
 
   const verifyCode = async () => {
-    if (!confirmationResult || !code) return;
+    if (!confirmationResult || !code) {
+      addLog('⚠️ 認証コードが空です');
+      return;
+    }
+
+    addLog(`🔑 認証コード確認: ${code}`);
     try {
       await confirmationResult.confirm(code);
-      // 認証成功 → 顧客情報更新
+      addLog('✅ 認証成功！');
+
       const res = await fetch('/api/customer/verify-phone', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token }),
       });
+
       if (!res.ok) throw new Error('更新に失敗しました。');
+      addLog('✅ 顧客情報更新完了 → ダッシュボードへ');
       router.push('/customer/dashboard');
     } catch (err: any) {
+      addLog(`❌ 認証エラー: ${err.message}`);
       setError(err.message || '認証コードが正しくありません。');
     }
   };
@@ -154,6 +186,20 @@ function VerifyContent() {
         )}
 
         {error && <p className="mt-4 text-red-500 text-sm text-center">{error}</p>}
+
+        {/* デバッグログ表示（開発中のみ） */}
+        <div className="mt-6 border-t pt-4">
+          <p className="text-xs text-gray-400 font-bold">🐛 デバッグログ</p>
+          <div className="max-h-32 overflow-y-auto bg-gray-50 rounded p-2 text-xs font-mono">
+            {debugLog.length === 0 ? (
+              <span className="text-gray-400">ログがありません</span>
+            ) : (
+              debugLog.map((log, i) => (
+                <div key={i} className="border-b border-gray-200 py-1">{log}</div>
+              ))
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

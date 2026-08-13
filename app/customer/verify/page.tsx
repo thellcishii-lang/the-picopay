@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
+import { getAuth, signInWithPhoneNumber, ConfirmationResult, RecaptchaVerifier } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -54,12 +54,13 @@ function VerifyContent() {
       const formattedPhone = phoneNumber.startsWith('0')
         ? `+81${phoneNumber.slice(1)}`
         : phoneNumber;
-      // recaptchaVerifier を用意（見えない reCAPTCHA を使う）
-const recaptchaVerifier = new RecaptchaVerifier(auth, 'send-sms-button', {
-  size: 'invisible',
-});
 
-const result = await signInWithPhoneNumber(auth, formattedPhone, recaptchaVerifier);
+      // reCAPTCHA を設定（見えないタイプ）
+      const recaptchaVerifier = new RecaptchaVerifier(auth, 'send-sms-button', {
+        size: 'invisible',
+      });
+
+      const result = await signInWithPhoneNumber(auth, formattedPhone, recaptchaVerifier);
       setConfirmationResult(result);
     } catch (err: any) {
       setError(err.message || 'SMS送信に失敗しました。');
@@ -120,6 +121,7 @@ const result = await signInWithPhoneNumber(auth, formattedPhone, recaptchaVerifi
               />
             </div>
             <button
+              id="send-sms-button"
               onClick={sendSms}
               disabled={sending || !phoneNumber}
               className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"

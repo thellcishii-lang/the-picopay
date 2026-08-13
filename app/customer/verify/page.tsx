@@ -2,20 +2,21 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, signInWithPhoneNumber, ConfirmationResult, RecaptchaVerifier } from 'firebase/auth';
 
+// ★ Firebase設定（環境変数 → フォールバック）
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyAKwyjQexM3IpWwfPxO3uhUBnBt1fD2EA",
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "the-picopay.firebaseapp.com",
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "the-picopay",
 };
 
-console.log('🔥 Firebase Config:', firebaseConfig);
-
-const app = initializeApp(firebaseConfig);
+// ★ 既存アプリがあれば再利用（二重初期化防止）
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
 
+// ★ デバッグログ表示用
 function VerifyContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -29,16 +30,18 @@ function VerifyContent() {
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
   const [debugLog, setDebugLog] = useState<string[]>([]);
 
+  // ★ ログ追加（画面とConsole両方に出る）
   const addLog = (msg: string) => {
     console.log('🐛', msg);
     setDebugLog(prev => [...prev, msg]);
   };
 
+  // ★ トークン検証（顧客情報取得）
   useEffect(() => {
     if (!token) {
       setLoading(false);
       setError('無効なURLです。');
-      addLog('❌ トークンなし');
+      addLog('❌ トークンがありません');
       return;
     }
 
@@ -47,7 +50,7 @@ function VerifyContent() {
       .then((data) => {
         if (data.valid && data.customer) {
           setPhoneNumber(data.customer.phone || '');
-          addLog(`✅ 顧客情報取得: ${data.customer.name} (${data.customer.phone})`);
+          addLog(`✅ 顧客情報取得成功: ${data.customer.name} (${data.customer.phone})`);
         } else {
           setError(data.error || '無効なQRコードです。');
           addLog(`❌ 顧客情報取得失敗: ${data.error}`);
@@ -60,6 +63,7 @@ function VerifyContent() {
       .finally(() => setLoading(false));
   }, [token]);
 
+  // ★ SMS送信
   const sendSms = async () => {
     if (!phoneNumber) {
       addLog('⚠️ 電話番号が空です');
@@ -74,23 +78,21 @@ function VerifyContent() {
       const formattedPhone = phoneNumber.startsWith('0')
         ? `+81${phoneNumber.slice(1)}`
         : phoneNumber;
+      addLog(`📞 電話番号変換後: ${formattedPhone}`);
 
-      addLog(`📞 変換後: ${formattedPhone}`);
-
+      // ★ reCAPTCHA（render() 必須）
       const recaptchaVerifier = new RecaptchaVerifier(auth, 'send-sms-button', {
-  size: 'invisible',
-  callback: () => {
-    addLog('✅ reCAPTCHA コールバック成功');
-  },
-  'expired-callback': () => {
-    addLog('⚠️ reCAPTCHA 有効期限切れ');
-  },
-});
+        size: 'invisible',
+        callback: () => addLog('✅ reCAPTCHA コールバック成功'),
+        'expired-callback': () => addLog('⚠️ reCAPTCHA 有効期限切れ'),
+      });
 
-      addLog('🔐 reCAPTCHA設定完了');
+      await recaptchaVerifier.render();
+      addLog('🔐 reCAPTCHA レンダリング完了');
+
       const result = await signInWithPhoneNumber(auth, formattedPhone, recaptchaVerifier);
       setConfirmationResult(result);
-      addLog('✅ SMS送信成功！認証コードを待っています');
+      addLog('✅ SMS送信成功！認証コード待機中');
     } catch (err: any) {
       addLog(`❌ SMS送信エラー: ${err.message}`);
       setError(err.message || 'SMS送信に失敗しました。');
@@ -99,6 +101,7 @@ function VerifyContent() {
     }
   };
 
+  // ★ 認証コード確認
   const verifyCode = async () => {
     if (!confirmationResult || !code) {
       addLog('⚠️ 認証コードが空です');
@@ -115,8 +118,8 @@ function VerifyContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token }),
       });
-
       if (!res.ok) throw new Error('更新に失敗しました。');
+
       addLog('✅ 顧客情報更新完了 → ダッシュボードへ');
       router.push('/customer/dashboard');
     } catch (err: any) {
@@ -156,7 +159,6 @@ function VerifyContent() {
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
                 className="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                disabled={!!confirmationResult}
               />
             </div>
             <button
@@ -193,10 +195,10 @@ function VerifyContent() {
 
         {error && <p className="mt-4 text-red-500 text-sm text-center">{error}</p>}
 
-        {/* デバッグログ表示（開発中のみ） */}
+        {/* ★ デバッグログ表示 */}
         <div className="mt-6 border-t pt-4">
           <p className="text-xs text-gray-400 font-bold">🐛 デバッグログ</p>
-          <div className="max-h-32 overflow-y-auto bg-gray-50 rounded p-2 text-xs font-mono">
+          <div className="max-h-40 overflow-y-auto bg-gray-50 rounded p-2 text-xs font-mono">
             {debugLog.length === 0 ? (
               <span className="text-gray-400">ログがありません</span>
             ) : (
@@ -211,6 +213,7 @@ function VerifyContent() {
   );
 }
 
+// ★ Suspense でラップ（useSearchParams 対応）
 export default function VerifyPage() {
   return (
     <Suspense fallback={<div className="min-h-screen flex items-center justify-center">読み込み中...</div>}>

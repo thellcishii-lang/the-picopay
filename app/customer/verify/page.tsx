@@ -54,7 +54,12 @@ function VerifyContent() {
       const formattedPhone = phoneNumber.startsWith('0')
         ? `+81${phoneNumber.slice(1)}`
         : phoneNumber;
-      const result = await signInWithPhoneNumber(auth, formattedPhone);
+      // recaptchaVerifier を用意（見えない reCAPTCHA を使う）
+const recaptchaVerifier = new RecaptchaVerifier(auth, 'send-sms-button', {
+  size: 'invisible',
+});
+
+const result = await signInWithPhoneNumber(auth, formattedPhone, recaptchaVerifier);
       setConfirmationResult(result);
     } catch (err: any) {
       setError(err.message || 'SMS送信に失敗しました。');

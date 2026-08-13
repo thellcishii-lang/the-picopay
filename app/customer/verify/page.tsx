@@ -6,9 +6,9 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, signInWithPhoneNumber, ConfirmationResult, RecaptchaVerifier } from 'firebase/auth';
 
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  apiKey: "DUMMY_API_KEY",
+  authDomain: "DUMMY_AUTH_DOMAIN",
+  projectId: "DUMMY_PROJECT_ID",
 };
 
 const app = initializeApp(firebaseConfig);

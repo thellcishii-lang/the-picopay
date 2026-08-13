@@ -81,7 +81,6 @@ function VerifyContent() {
       // ★ reCAPTCHA設定（現在の設定で動作させる）
       const recaptchaVerifier = new RecaptchaVerifier(auth, 'send-sms-button', {
         size: 'invisible',
-        callback: () => addLog('✅ reCAPTCHA コールバック成功'),
         'expired-callback': () => addLog('⚠️ reCAPTCHA 有効期限切れ'),
       });
 

@@ -5,10 +5,11 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInWithPhoneNumber, ConfirmationResult, RecaptchaVerifier } from 'firebase/auth';
 
+// 環境変数を使わずに、直接値を書く（一時的）
 const firebaseConfig = {
-  apiKey: "DUMMY_API_KEY",
-  authDomain: "DUMMY_AUTH_DOMAIN",
-  projectId: "DUMMY_PROJECT_ID",
+  apiKey: "AIzaSyAKwyjQexM3IpWwfPxO3uhUBnBt1fD2EA",
+  authDomain: "the-picopay.firebaseapp.com",
+  projectId: "the-picopay",
 };
 
 const app = initializeApp(firebaseConfig);
